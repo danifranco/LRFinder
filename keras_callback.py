@@ -8,6 +8,7 @@ import os
 class LRFinder(Callback):
     def __init__(self, min_lr, max_lr, mom=0.9, stop_multiplier=None, 
                  reload_weights=True, batches_lr_update=5, lrfinder_dir=None):
+        self.lrfinder_dir = lrfinder_dir
         self.min_lr = min_lr
         self.max_lr = max_lr
         self.mom = mom
@@ -32,7 +33,7 @@ class LRFinder(Callback):
         self.iteration=0
         self.best_loss=0
         if self.reload_weights:
-            self.model.save_weights(os.path.join(lrfinder_dir, 'tmp.hdf5'))
+            self.model.save_weights(os.path.join(self.lrfinder_dir, 'tmp.hdf5'))
         
     def on_batch_end(self, batch, logs={}):
         loss = logs.get('loss')
@@ -46,7 +47,7 @@ class LRFinder(Callback):
         if self.iteration%self.batches_lr_update==0: # Evaluate each lr over 5 epochs
             
             if self.reload_weights:
-                self.model.load_weights(os.path.join(lrfinder_dir,'tmp.hdf5'))
+                self.model.load_weights(os.path.join(self.lrfinder_dir,'tmp.hdf5'))
           
             lr = self.learning_rates[self.iteration//self.batches_lr_update]            
             K.set_value(self.model.optimizer.lr, lr)
@@ -60,11 +61,11 @@ class LRFinder(Callback):
     
     def on_train_end(self, logs=None):
         if self.reload_weights:
-                self.model.load_weights(os.path.join(lrfinder_dir,'tmp.hdf5'))
+                self.model.load_weights(os.path.join(self.lrfinder_dir,'tmp.hdf5'))
                 
         plt.figure(figsize=(12, 6))
         plt.plot(self.learning_rates[:len(self.losses)], self.losses)
         plt.xlabel("Learning Rate")
         plt.ylabel("Loss")
         plt.xscale('log')
-        plt.savefig(os.path.join(lrfinder_dir, 'LRFinder_plot.png'))
+        plt.savefig(os.path.join(self.lrfinder_dir, 'LRFinder_plot.png'))
